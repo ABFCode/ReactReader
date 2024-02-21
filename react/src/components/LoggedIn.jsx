@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../utils/supabaseClient";
+import { Link } from "react-router-dom";
 
 const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
@@ -31,6 +32,9 @@ function LoggedIn() {
     <>
       <div>{JSON.stringify(ourSecretData)}</div>
       <button onClick={handleSignOut}>Sign out</button>
+      <Link to="/library">
+        <button>Go to Library</button>
+      </Link>
     </>
   );
 }
