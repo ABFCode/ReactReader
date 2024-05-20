@@ -10,26 +10,55 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 
 function App() {
   // Contains the user received from Supabase
-  const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    // Whenever the auth state changes, we receive an event and a session object.
-    // Save the user from the session object to the state.
-    supabase.auth.onAuthStateChange((event, session) => {
-      console.log(event, session);
-      if (event === "SIGNED_IN") {
-        setUser(session?.user);
-      }
-    });
-  }, []);
+    // Check for an active session on mount
+    const fetchInitialSession = async () => {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
 
+      if (error) {
+        console.error("Error fetching initial session:", error);
+      } else {
+        setSession(session);
+        console.log("Initial Session:", session);
+      }
+    };
+
+    fetchInitialSession(); // Call the async function
+
+    // Subscribe to auth state changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event) => {
+        // Get the updated session after an auth state change
+        const {
+          data: { session: updatedSession },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error("Error fetching updated session:", error);
+        } else {
+          setSession(updatedSession);
+          console.log("Auth State Changed:", event, updatedSession);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
   // return user ? <LoggedIn /> : <LoggedOut />;
 
   return (
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={user ? <LoggedIn /> : <LoggedOut />} />
+          <Route path="/" element={session ? <LoggedIn /> : <LoggedOut />} />
 
           <Route
             path="/Library"
