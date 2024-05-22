@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (_event, session) => {
         setSession(session);
         setUser(session?.user);
         setLoading(false);
@@ -44,7 +44,10 @@ export const AuthProvider = ({ children }) => {
   const value = {
     session,
     user,
-    signOut: () => supabase.auth.signOut(),
+    signOut: async () => {
+      await supabase.auth.signOut(), setSession(null);
+      setUser(null);
+    },
   };
 
   // use a provider to pass down the value

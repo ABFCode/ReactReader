@@ -3,11 +3,11 @@ import { useAuth } from "../hooks/auth";
 import PropTypes from "prop-types";
 
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+  const { session } = useAuth();
 
-  if (!user) {
+  if (!session) {
     // user is not authenticated
-    return <Navigate to="/" />;
+    return <Navigate to="/login" />;
   }
   return <>{children}</>;
 };

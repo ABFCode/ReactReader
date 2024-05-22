@@ -1,88 +1,84 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/auth";
 import { supabase } from "../utils/supabaseClient";
+import { Link } from "react-router-dom";
 
 function Library() {
-  const [words, setWords] = useState([]);
-  const [newWord, setNewWord] = useState("");
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth(); // Get the current user from your AuthContext
 
-  // Fetch words for the logged-in user
+  // Fetch books for the logged-in user
   useEffect(() => {
-    const fetchWords = async () => {
+    const fetchBooks = async () => {
       if (user) {
         const { data, error } = await supabase
-          .from("Words")
+          .from("books")
           .select("*")
           .eq("user_id", user.id);
 
         if (error) {
-          console.error("Error fetching words:", error);
+          console.error("Error feching books", error);
         } else {
-          setWords(data);
+          setBooks(data);
         }
       }
+      setLoading(false);
     };
 
-    fetchWords();
+    fetchBooks();
   }, [user]);
 
-  // Handle adding a new word
-  const handleAddWord = async () => {
-    if (user && newWord.trim()) {
-      const { data, error } = await supabase
-        .from("Words")
-        .insert([{ user_id: user.id, words: newWord.trim() }])
-        .select();
+  //Handle path selection for book
+  const handleFileSelect = async (event) => {
+    const file = event.target.files[0];
 
-      console.log("Data:", data);
+    if (file && user) {
+      //Get file path
+      const filePath = file.path;
+
+      //store metadata in DB
+      const { data, error } = await supabase
+        .from("books")
+        .insert([
+          {
+            user_id: user.id,
+            title: file.name,
+            author: "Unknown",
+            filepath: filePath,
+          },
+        ])
+        .select();
       if (error) {
-        console.error("Error adding word:", error);
+        console.error("Error adding book:", error);
       } else {
-        // Assuming `data` is an array and you want to add all new words
-        // directly to the `words` array in your state:
-        if (Array.isArray(data) && data.length > 0) {
-          setWords([...words, ...data]);
-          console.log("It is an array!");
-        } else if (data) {
-          // If `data` is a single object, not an array:
-          setWords([...words, data]);
-          console.log("It's not an array!");
-        }
-        setNewWord(""); // Clear the input field
+        setBooks([...books, data[0]]);
       }
     }
-
-    // This seems like a separate fetch operation; consider moving it out
-    // or ensuring it's only called when necessary.
-    const { data, error } = await supabase
-      .from("Words")
-      .select("*")
-      .eq("user_id", user.id);
-
-    console.log("Supabase response:", { data, error });
   };
+
+  if (loading) {
+    return <div>Loading...</div>; // Show a loading indicator while loading
+  }
 
   return (
     <div>
-      <h1>My Words</h1>
-      <input
-        type="text"
-        value={newWord}
-        onChange={(e) => setNewWord(e.target.value)}
-        placeholder="Add a new word"
-      />
-      <button onClick={handleAddWord}>Add Word</button>
-      {/* <ul>
-        {words.map((word) => (
-          <li key={word.id}>{word.word}</li>
-        ))}
-      </ul> */}
-      <ul>
-        {words.map((wordObj) => (
-          <li key={wordObj.id}>{wordObj.words}</li> // 'words' is the property from JSON
-        ))}
-      </ul>
+      <h1>My Library</h1>
+
+      <input type="file" onChange={handleFileSelect} />
+
+      {books.map((book) => {
+        console.log("Book ID:", book.id);
+        return (
+          <li key={book.id}>
+            <strong>{book.title}</strong>
+          </li>
+        );
+      })}
+
+      <Link to="/">
+        <button>Go to Home</button>
+      </Link>
     </div>
   );
 }

@@ -1,53 +1,39 @@
 //import { useState, useEffect } from "react";
-import { supabase } from "../utils/supabaseClient";
+//import { supabase } from "../utils/supabaseClient";
 import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../hooks/auth";
 
-const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+//const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
 function LoggedIn() {
+  const { signOut, session } = useAuth();
   const navigate = useNavigate();
-  // Store data that we get from the backend
-  //const [ourSecretData, setOutSecretData] = useState();
-
-  // Perform a request to the backend (with a protected route) to get the secret data
-  // useEffect(() => {
-  //   fetch("http://localhost:3000/secret", {
-  //     method: "POST",
-  //     headers: {
-  //       // This is the token that we get from Supabase.
-  //       Authorization: getToken(),
-  //     },
-  //   })
-  //     .then((res) => res.json())
-  //     .then((data) => setOutSecretData(data));
-  // }, []);
-
-  // This removes the token from local storage and reloads the page
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    navigate("/");
+    try {
+      console.log("Awaiting Signout");
+      console.log("Current Session", session);
+      await signOut();
+      console.log("Finished Awaiting");
+      navigate("/");
+    } catch (error) {
+      console.log("Failed to signout:", error);
+    }
+  }
+
+  function printSession() {
+    console.log(session);
   }
 
   return (
-    //<div>{JSON.stringify(ourSecretData)}</div>
     <>
+      <h1>Welcome, {session?.user?.email}</h1>
       <button onClick={handleSignOut}>Sign out</button>
       <Link to="/library">
         <button>Go to Library</button>
       </Link>
+      <button onClick={printSession}>Print Session</button>
     </>
   );
 }
-
-// This function gets the token from local storage.
-// Supabase stores the token in local storage so we can access it from there.
-// const getToken = () => {
-//   const storageKey = `sb-${supabaseProjectId}-auth-token`;
-//   const sessionDataString = localStorage.getItem(storageKey);
-//   const sessionData = JSON.parse(sessionDataString || "null");
-//   const token = sessionData?.access_token;
-
-//   return token;
-// };
 
 export default LoggedIn;
