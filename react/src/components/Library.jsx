@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../hooks/auth";
 import { supabase } from "../utils/supabaseClient";
 import { Link } from "react-router-dom";
+import useSupabaseStorage from "../hooks/useSupabaseStorage";
+import useBookOperations from "../hooks/useBookOperations";
 
 import {
   Card,
@@ -14,12 +16,15 @@ import {
   Button,
   Space,
   Stack,
+  ActionIcon,
 } from "@mantine/core";
 
 function Library() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth(); // Get the current user from your AuthContext
+  const { deleteBook } = useBookOperations();
+  const { uploadFile, getDownloadUrl, uploadProgress } = useSupabaseStorage();
 
   const fileInputRef = useRef(null);
 
@@ -49,9 +54,16 @@ function Library() {
     const file = event.target.files[0];
 
     if (file && user) {
-      //Get file path
+      const fileName = `${user.id}-${Date.now()}-${file.name}`;
+      const storageKey = `books/${fileName}`;
       const filePath = file.path;
 
+      const uploadSuccess = await uploadFile(file, storageKey);
+
+      if (!uploadSuccess) {
+        console.error("Failed to upload book in Library");
+        return;
+      }
       //store metadata in DB
       const { data, error } = await supabase
         .from("books")
@@ -76,6 +88,15 @@ function Library() {
     fileInputRef.current.click(); // Trigger the click event on the hidden input
   };
 
+  const handleDeleteBook = async (bookId) => {
+    const success = await deleteBook(bookId);
+
+    if (success) {
+      setBooks(books.filter((book) => book.id !== bookId));
+    } else {
+      console.error("Error deleting book");
+    }
+  };
   return (
     <div style={{ padding: "2rem" }}>
       <input
