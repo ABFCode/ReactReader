@@ -56,7 +56,7 @@ function Library() {
     if (file && user) {
       const fileName = `${user.id}-${Date.now()}-${file.name}`;
       const storageKey = `books/${fileName}`;
-      const filePath = file.path;
+      //const filePath = file.path;
 
       const uploadSuccess = await uploadFile(file, storageKey);
 
@@ -72,7 +72,7 @@ function Library() {
             user_id: user.id,
             title: file.name,
             author: "Unknown",
-            filepath: filePath,
+            filepath: storageKey,
           },
         ])
         .select();
@@ -89,14 +89,20 @@ function Library() {
   };
 
   const handleDeleteBook = async (bookId) => {
-    const success = await deleteBook(bookId);
+    try {
+      const success = await deleteBook(bookId);
+      console.log("Success is:", success);
 
-    if (success) {
-      setBooks(books.filter((book) => book.id !== bookId));
-    } else {
-      console.error("Error deleting book");
+      if (success) {
+        setBooks(books.filter((book) => book.id !== bookId));
+      } else {
+        console.error("Error deleting book");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
     }
   };
+
   return (
     <div style={{ padding: "2rem" }}>
       <input
@@ -139,6 +145,13 @@ function Library() {
                 {book.author}
               </Text>
             </Group>
+            <ActionIcon
+              variant="outline"
+              color="red"
+              onClick={() => handleDeleteBook(book.id)}
+            >
+              X
+            </ActionIcon>
           </Card>
         ))}
       </SimpleGrid>

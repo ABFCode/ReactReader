@@ -34,6 +34,7 @@ const useBookOperations = () => {
         console.error("Error deleting book from DB:", dbError);
         throw error;
       }
+      return true;
     } catch (error) {
       console.error("Error deleting book:", error);
       return false;
