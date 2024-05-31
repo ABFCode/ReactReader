@@ -17,13 +17,16 @@ import {
   Space,
   Stack,
   ActionIcon,
+  Modal,
+  TextInput,
 } from "@mantine/core";
 
 function Library() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingBook, setEditingBook] = useState(null);
   const { user } = useAuth(); // Get the current user from your AuthContext
-  const { deleteBook } = useBookOperations();
+  const { deleteBook, updateBook } = useBookOperations();
   const { uploadFile, getDownloadUrl, uploadProgress } = useSupabaseStorage();
 
   const fileInputRef = useRef(null);
@@ -103,6 +106,34 @@ function Library() {
     }
   };
 
+  const handleUpdateBook = async (e) => {
+    e.preventDefault();
+    if (!editingBook) return;
+
+    const { title, author } = editingBook;
+
+    try {
+      const success = await updateBook(editingBook.id, { title, author });
+
+      if (success) {
+        setBooks(
+          books.map((b) =>
+            b.id === editingBook.id ? { ...b, title, author } : b
+          )
+        );
+        setEditingBook(null);
+      } else {
+        console.error("Error updating book");
+      }
+    } catch (error) {
+      console.error("Error updating book");
+    }
+  };
+
+  const handleEditBookChange = (field, value) => {
+    setEditingBook((currentBook) => ({ ...currentBook, [field]: value }));
+  };
+
   return (
     <div style={{ padding: "2rem" }}>
       <input
@@ -152,9 +183,45 @@ function Library() {
             >
               X
             </ActionIcon>
+            <ActionIcon
+              variant="outline"
+              color="blue"
+              onClick={() => setEditingBook(book)}
+            >
+              Edit
+            </ActionIcon>
           </Card>
         ))}
       </SimpleGrid>
+
+      {/* Edit Modal */}
+      <Modal
+        opened={editingBook !== null}
+        onClose={() => setEditingBook(null)}
+        title="Edit Book"
+      >
+        {editingBook && (
+          <form onSubmit={handleUpdateBook}>
+            <TextInput
+              label="Title"
+              value={editingBook.title}
+              onChange={(e) => handleEditBookChange("title", e.target.value)}
+              required
+            />
+
+            <TextInput
+              label="Author"
+              value={editingBook.author}
+              onChange={(e) => handleEditBookChange("author", e.target.value)}
+              required
+            />
+
+            <Button type="submit" mt="md">
+              Save
+            </Button>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

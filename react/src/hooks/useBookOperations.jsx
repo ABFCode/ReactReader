@@ -41,7 +41,26 @@ const useBookOperations = () => {
     }
   };
 
-  return { deleteBook };
+  const updateBook = async (bookId, updatedData) => {
+    try {
+      const { error } = await supabase
+        .from("books")
+        .update(updatedData)
+        .eq("id", bookId);
+
+      if (error) {
+        console.error("Error Updating book:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error updating book:", error);
+      return false;
+    }
+  };
+
+  return { deleteBook, updateBook };
 };
 
 export default useBookOperations;
