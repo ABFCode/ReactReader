@@ -27,7 +27,7 @@ function Library() {
   const [editingBook, setEditingBook] = useState(null);
   const { user } = useAuth(); // Get the current user from your AuthContext
   const { deleteBook, updateBook } = useBookOperations();
-  const { uploadFile, getDownloadUrl, uploadProgress } = useSupabaseStorage();
+  const { uploadFile, downloadFile } = useSupabaseStorage();
 
   const fileInputRef = useRef(null);
 
@@ -134,6 +134,10 @@ function Library() {
     setEditingBook((currentBook) => ({ ...currentBook, [field]: value }));
   };
 
+  const handleDownloadBook = (book) => {
+    downloadFile(book.filepath, `${book.title}.epub`);
+  };
+
   return (
     <div style={{ padding: "2rem" }}>
       <input
@@ -176,6 +180,7 @@ function Library() {
                 {book.author}
               </Text>
             </Group>
+            <Button onClick={() => handleDownloadBook(book)}>Download</Button>
             <ActionIcon
               variant="outline"
               color="red"

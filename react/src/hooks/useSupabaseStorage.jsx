@@ -23,6 +23,25 @@ const useSupabaseStorage = () => {
     return true;
   };
 
+  const downloadFile = async (storageKey, fileName) => {
+    try {
+      const downloadUrl = await getDownloadUrl(storageKey);
+
+      if (!downloadUrl) {
+        console.error("Error getting download URL");
+      }
+
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Error starting download", error);
+    }
+  };
+
   const getDownloadUrl = async (storageKey) => {
     const { data, error } = await supabase.storage
       .from("book-uploads")
@@ -35,8 +54,7 @@ const useSupabaseStorage = () => {
 
     return URL.createObjectURL(data);
   };
-
-  return { uploadFile, getDownloadUrl, uploadProgress };
+  return { uploadFile, uploadProgress, downloadFile };
 };
 
 export default useSupabaseStorage;
